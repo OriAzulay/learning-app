@@ -1,0 +1,18 @@
+# dependencies
+node_modules/
+
+# local config (only .env.example is committed)
+.env
+
+# SQLite database files
+backend/data/*.db
+backend/data/*.db-*
+
+# build output
+frontend/dist/
+coverage/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0A0E27" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>מעקב למידה</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230A0E27'/%3E%3Cpath d='M7 22l6-7 5 4 7-9' stroke='%2339FF14' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="wrap">
+      <!-- =============== עמוד 1: פתיחה =============== -->
+      <section id="home">
+        <header class="banner">
+          <h1 class="hello">
+            ברוכים השבים <span id="userName"></span>! <span class="wave">✦</span>
+          </h1>
+          <p class="today-str" id="todayStr"></p>
+          <p class="role-line">
+            הנה ציר ההתקדמות שלך בלמידה לתפקיד
+            <select class="role-select" id="roleSelect" aria-label="בחירת תפקיד"></select>
+          </p>
+        </header>
+
+        <div class="week-label" id="weekLabelHome"></div>
+        <nav class="week" data-week></nav>
+
+        <h2 class="section-title">נושאים שענית ודירוג:</h2>
+        <div class="topics" id="topics"></div>
+        <div class="legend">
+          <span><i class="circle green"></i>מצוין</span>
+          <span><i class="circle orange"></i>צריך ללמוד עוד</span>
+          <span><i class="circle red"></i>צריך ללמוד הרבה!</span>
+          <span><i class="circle none"></i>עוד לא נבחן</span>
+        </div>
+
+        <button class="start-btn" id="startBtn">התחל</button>
+        <div class="start-sub" id="startSub"></div>
+      </section>
+
+      <!-- =============== עמוד 2: שאלות =============== -->
+      <section id="quiz" class="hidden">
+        <div class="topbar">
+          <button class="back" id="backBtn">→ חזרה</button>
+          <div class="brand">מסלול <b id="roleName"></b></div>
+        </div>
+
+        <div class="week-label" id="weekLabelQuiz"></div>
+        <nav class="week" data-week></nav>
+
+        <div class="quiz-head">
+          <h2 id="quizTitle"></h2>
+          <p id="quizSub"></p>
+          <div class="progress"><i id="progBar"></i></div>
+          <div class="progress-txt" id="progTxt"></div>
+          <div id="scoreCard"></div>
+        </div>
+
+        <ol class="qlist" id="qlist"></ol>
+
+        <button class="submit-btn" id="submitBtn" disabled>Submit</button>
+        <div class="submit-hint" id="submitHint"></div>
+        <button class="more-btn" id="moreBtn">+ add more questions</button>
+      </section>
+
+      <footer class="foot">
+        <button id="exportBtn">ייצוא גיבוי</button>
+        <label
+          >ייבוא גיבוי<input type="file" id="importFile" accept="application/json,.json" hidden
+        /></label>
+      </footer>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
