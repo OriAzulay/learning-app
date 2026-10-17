@@ -1,142 +1,143 @@
-# Learning App — מעקב למידה לתפקידי פיתוח
+# Learning App — Learning Tracker for Developer Roles
 
-אפליקציה קלה, בקובץ HTML אחד, לתרגול יומי לקראת תפקיד פיתוח. בכל יום האפליקציה מייצרת 20 שאלות חדשות ברמת קושי עולה. היא שומרת את השאלות ואת התשובות, בודקת אותן אחרי Submit ומדרגת את רמת השליטה שלך בכל נושא.
+A lightweight, single-file HTML app for daily practice toward a developer role. Every day the app generates 20 new questions of increasing difficulty. It stores the questions and your answers, checks them after Submit, and rates your mastery of each topic.
 
-כרגע יש שני מסלולים: **Backend** ו-**Basic C++**.
+There are currently two tracks: **Backend** and **Basic C++**.
 
 ---
 
-## הרעיון
+## The Idea
 
-- **תרגול יומי קבוע:** בפתיחה הראשונה בכל יום נוצרות 20 שאלות, ארבע בכל רמה מ-1 עד 5. בשאר היום רואים את אותן שאלות ואת התשובות שכבר נכתבו.
-- **תשובה ופתרון:** כותבים תשובה חופשית לכל שאלה. אחרי Submit מופיע ✓ או ✗, והכפתור "פתרון" מחליף את תיבת התשובה בפתרון הנכון.
-- **התקדמות לפי נושא:** כל נושא מקבל צבע לפי אחוז התשובות הנכונות:
-  ירוק (75% ומעלה) · כתום (50%–75%) · אדום (מתחת ל-50%).
-- **למידה מסתגלת:** הבחירה מעדיפה שאלות שעוד לא נשאלו ונושאים חלשים. שאלה שטעית בה חוזרת אחרי 3 ימים.
-- **עוד שאלות:** הכפתור `add more questions` מוסיף עוד 20 שאלות חדשות באותו יום, שוב מרמה 1 עד 5.
+- **Steady daily practice:** The first time you open the app each day, 20 questions are generated, four at each level from 1 to 5. For the rest of the day you see the same questions along with the answers you've already written.
+- **Answer and solution:** Write a free-text answer for each question. After Submit, a ✓ or ✗ appears, and the "Solution" button (פתרון) replaces the answer box with the correct solution.
+- **Progress by topic:** Each topic gets a color based on the percentage of correct answers:
+  green (75% and above) · orange (50%–75%) · red (below 50%).
+- **Adaptive learning:** Selection favors questions you haven't seen yet and weak topics. A question you got wrong comes back after 3 days.
+- **More questions:** The `add more questions` button adds another 20 new questions on the same day, again from level 1 to 5.
 
-## מסכים
+## Screens
 
-| מסך | מה יש בו |
+| Screen | What it contains |
 |---|---|
-| **פתיחה** | באנר עם ברכה ותאריך · בחירת תפקיד · ציר שבוע (ראשון עד שבת, היום מודגש, חצים לשבוע הבא והקודם) · רשימת נושאים עם דירוג צבע · כפתור "התחל" |
-| **שאלות** | ציר שבוע · 20 שאלות עם תיבת תשובה · "תשובה / פתרון" מתחת לכל תיבה · Submit בסוף (נפתח רק כשעונים על הכל) · `add more questions` |
+| **Home** | Banner with a greeting and the date · role picker · week strip (Sunday to Saturday, today highlighted, arrows for next and previous week) · topic list with color ratings · "Start" button |
+| **Questions** | Week strip · 20 questions with answer boxes · "Answer / Solution" under each box · Submit at the bottom (enabled only once everything is answered) · `add more questions` |
 
-לחיצה על יום קודם בציר פותחת את השאלות והתשובות של אותו יום. נקודה ירוקה מסמנת יום שהוגש, ונקודה כחולה מסמנת יום שהתחלת לענות בו.
+Clicking a previous day in the strip opens that day's questions and answers. A green dot marks a submitted day, and a blue dot marks a day you started answering.
 
 ---
 
-## ארכיטקטורה
+## Architecture
 
 ```
 ┌──────────────────────── learning-app.html ────────────────────────┐
 │                                                                   │
-│  HTML  ── שני מסכים: #home (פתיחה) ו-#quiz (שאלות)                │
-│  CSS   ── עיצוב dark fintech, משתני צבע ב-:root, מותאם לנייד, RTL  │
-│  JS    ┬─ מאגרי שאלות (טקסט מובנה) + תבניות שמייצרות שאלות       │
-│        ├─ בחירת שאלות יומית (adaptive)                            │
-│        ├─ בדיקת תשובות (מילות מפתח / מספר / Big-O / פלט)          │
-│        ├─ ניתוב פשוט לפי hash:  #/  ו-#/day/YYYY-MM-DD            │
-│        └─ שמירה ב-localStorage + ייצוא/ייבוא גיבוי JSON           │
+│  HTML  ── two screens: #home and #quiz                            │
+│  CSS   ── dark fintech style, color variables in :root,           │
+│           mobile-friendly, RTL                                    │
+│  JS    ┬─ question banks (structured text) + generator templates  │
+│        ├─ adaptive daily question selection                       │
+│        ├─ answer checking (keywords / number / Big-O / output)    │
+│        ├─ simple hash routing:  #/  and #/day/YYYY-MM-DD          │
+│        └─ localStorage persistence + JSON backup export/import    │
 │                                                                   │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-**עקרונות:**
-- **קובץ אחד, בלי שרת ובלי build:** אפשר לפתוח אותו ישירות מהמחשב או מהטלפון. אין תלויות חוץ מגופן Heebo מ-Google Fonts, ובלי אינטרנט מוצג גופן מערכת.
-- **בלי Backend ובלי AI:** הבדיקה נעשית בדפדפן מול פתרון שמור. אם הבדיקה האוטומטית טועה, לוחצים על ה-✓/✗ ומתקנים.
-- **הנתונים נשמרים מקומית:** כל מכשיר שומר את הנתונים שלו. כדי להעביר נתונים בין מכשירים משתמשים ב"ייצוא גיבוי" וב"ייבוא גיבוי".
+**Principles:**
+- **One file, no server, no build:** Open it directly on a computer or phone. No dependencies except the Heebo font from Google Fonts; offline, a system font is used.
+- **No backend, no AI:** Checking happens in the browser against a stored solution. If the automatic check is wrong, click the ✓/✗ to correct it.
+- **Data is stored locally:** Each device keeps its own data. To move data between devices, use "Export backup" and "Import backup".
 
-### מבנה הקוד (בתוך `<script>`)
+### Code Structure (inside `<script>`)
 
-| חלק | תפקיד |
+| Part | Role |
 |---|---|
-| `USER_NAME`, `QUESTIONS_PER_DAY`, `LEVELS` | הגדרות בסיס |
-| `BACKEND_TOPICS`, `BACKEND_BANK`, `backendTemplates()` | נושאי Backend, מאגר שאלות ותבניות (קודי HTTP, פורטים, Big-O, chmod, CIDR, חיפוש בינארי) |
-| `CPP_TOPICS`, `CPP_BANK` | נושאי C++ ומאגר שאלות עם קטעי קוד |
-| `ROLES` | רשימת התפקידים. כאן מוסיפים תפקיד חדש |
-| `parseBank()`, `allQuestions()`, `rich()` | פירוק המאגר לאובייקטים, והצגת טקסט עם בלוקי קוד |
-| `checkAnswer()` | בדיקת תשובה לפי סוג הבדיקה |
-| `load()` / `save()` | קריאה וכתיבה ל-localStorage |
-| `topicStats()`, `rating()` | חישוב אחוזים וצבע לכל נושא |
-| `pickQuestions()`, `generateDay()` | בחירת 20 שאלות ברמה עולה, עם עדיפות לשאלות חדשות ולנושאים חלשים |
-| `route()`, `renderWeeks()` | ניתוב וציר השבוע |
-| `showHome()`, `showQuiz()`, `renderQ()`, `renderQuizState()` | ציור המסכים |
+| `USER_NAME`, `QUESTIONS_PER_DAY`, `LEVELS` | Basic settings |
+| `BACKEND_TOPICS`, `BACKEND_BANK`, `backendTemplates()` | Backend topics, question bank and templates (HTTP codes, ports, Big-O, chmod, CIDR, binary search) |
+| `CPP_TOPICS`, `CPP_BANK` | C++ topics and a question bank with code snippets |
+| `ROLES` | The list of roles. Add new roles here |
+| `parseBank()`, `allQuestions()`, `rich()` | Parse the bank into objects, and render text with code blocks |
+| `checkAnswer()` | Check an answer according to its check type |
+| `load()` / `save()` | Read from and write to localStorage |
+| `topicStats()`, `rating()` | Compute the percentage and color for each topic |
+| `pickQuestions()`, `generateDay()` | Pick 20 questions of increasing level, favoring new questions and weak topics |
+| `route()`, `renderWeeks()` | Routing and the week strip |
+| `showHome()`, `showQuiz()`, `renderQ()`, `renderQuizState()` | Render the screens |
 
-### מודל הנתונים (localStorage, מפתח `learning-app.v1`)
+### Data Model (localStorage, key `learning-app.v1`)
 
 ```js
 {
-  role: "backend",                       // התפקיד שנבחר
+  role: "backend",                       // the selected role
   days: {
     backend: {
       "2026-10-17": {
-        items:   [ {id, topic, level, q, a, check}, ... ],  // השאלות של היום (עותק מלא)
-        answers: [ "...", ... ],         // התשובות שנכתבו
-        results: [ true, false, ... ],   // נכון / לא נכון
-        done:    [ true, ..., false ],   // אילו שאלות כבר הוגשו
-        view:    [ "ans" | "sol", ... ], // מה מוצג בכל תיבה
-        submitted: true                  // כל השאלות של היום הוגשו
+        items:   [ {id, topic, level, q, a, check}, ... ],  // the day's questions (full copy)
+        answers: [ "...", ... ],         // answers written
+        results: [ true, false, ... ],   // correct / incorrect
+        done:    [ true, ..., false ],   // which questions have been submitted
+        view:    [ "ans" | "sol", ... ], // what each box shows
+        submitted: true                  // all of the day's questions were submitted
       }
     },
     cpp: { ... }
   },
-  seen: { backend: { "<questionId>": { d: "2026-10-17", ok: true } } }  // מתי נשאלה כל שאלה ואם נענתה נכון
+  seen: { backend: { "<questionId>": { d: "2026-10-17", ok: true } } }  // when each question was asked and whether it was answered correctly
 }
 ```
 
-השאלות נשמרות כעותק מלא בתוך כל יום, כך ששינוי במאגר לא משנה היסטוריה.
+Questions are stored as a full copy inside each day, so changes to the bank don't alter history.
 
 ---
 
-## פורמט מאגר השאלות
+## Question Bank Format
 
-כל שאלה היא שורה אחת:
+Each question is one line:
 
 ```
-נושא ~ רמה ~ שאלה ~ פתרון ~ מילות מפתח        (Backend, המפריד הוא ~)
-נושא ¦ רמה ¦ שאלה ¦ פתרון ¦ מילות מפתח        (C++, המפריד הוא ¦ כי ~ משמש ל-destructor)
+topic ~ level ~ question ~ solution ~ keywords        (Backend, separator is ~)
+topic ¦ level ¦ question ¦ solution ¦ keywords        (C++, separator is ¦ because ~ is used for destructors)
 ```
 
-- **מילות מפתח:** קבוצות מופרדות בפסיק, וחלופות בתוך קבוצה מופרדות ב-`|`. התשובה נחשבת נכונה כשהיא מכילה מילה מכל קבוצה, או מרוב הקבוצות כשיש יותר משתיים.
-  לדוגמה: `lifo|אחרון שנכנס,fifo|ראשון שנכנס`
-- **`=ערך`:** התשובה צריכה להתחיל בערך הזה. מתאים לשאלות "מה יודפס?", למשל `=21`.
-- **קוד:** `@@` מפריד בין טקסט לקוד, ו-`\n` מסמן שורה חדשה בתוך הקוד. אפשר להשתמש בזה גם בשאלה וגם בפתרון.
-  לדוגמה: `מה לא בסדר בקוד הבא?@@int arr[5];\nfor (int i = 0; i <= 5; i++)\n    arr[i] = i;`
+- **Keywords:** Groups separated by commas, with alternatives within a group separated by `|`. An answer counts as correct when it contains a word from every group, or from most groups when there are more than two.
+  Example: `lifo|אחרון שנכנס,fifo|ראשון שנכנס`
+- **`=value`:** The answer must start with this value. Suited to "What will be printed?" questions, e.g. `=21`.
+- **Code:** `@@` separates text from code, and `\n` marks a new line inside the code. This works in both the question and the solution.
+  Example: `מה לא בסדר בקוד הבא?@@int arr[5];\nfor (int i = 0; i <= 5; i++)\n    arr[i] = i;`
 
-שאלות שנוצרות מתבנית (ב-`backendTemplates()`) יכולות להשתמש גם ב-`check:{type:"num"}` או ב-`check:{type:"bigo"}`.
+Template-generated questions (in `backendTemplates()`) can also use `check:{type:"num"}` or `check:{type:"bigo"}`.
 
-## הוספת תפקיד חדש
+## Adding a New Role
 
-1. מגדירים אובייקט נושאים, למשל `const FRONTEND_TOPICS = { react: "React", css: "CSS", ... }`.
-2. כותבים מאגר שאלות בפורמט שלמעלה. כדאי לפחות 4 שאלות בכל רמה, ועדיף יותר.
-3. מוסיפים שורה ל-`ROLES`:
+1. Define a topics object, e.g. `const FRONTEND_TOPICS = { react: "React", css: "CSS", ... }`.
+2. Write a question bank in the format above. Aim for at least 4 questions per level, preferably more.
+3. Add a line to `ROLES`:
    ```js
    frontend: { label:"Frontend", topics:FRONTEND_TOPICS, bank:FRONTEND_BANK }
    ```
-   (`sep` ו-`templates` הם אופציונליים.)
+   (`sep` and `templates` are optional.)
 
-התפקיד מופיע אוטומטית בתיבת הבחירה, עם ציר ימים ודירוג נפרדים.
+The role appears automatically in the picker, with its own day strip and ratings.
 
 ---
 
-## הרצה
+## Running
 
-- **במחשב:** פותחים את `learning-app.html` בדפדפן (Chrome, Edge, Firefox או Safari).
-- **בטלפון:** מורידים את הקובץ ופותחים אותו בדפדפן. התצוגה המקדימה של Google Drive לא מריצה HTML, ולכן צריך להוריד את הקובץ.
-- **GitHub Pages:** אפשר להפעיל Pages על הריפו ולגשת לאפליקציה מכל מכשיר. שימו לב שהנתונים עדיין נשמרים בנפרד בכל דפדפן.
+- **On a computer:** Open `learning-app.html` in a browser (Chrome, Edge, Firefox or Safari).
+- **On a phone:** Download the file and open it in a browser. Google Drive's preview doesn't run HTML, so you need to download the file.
+- **GitHub Pages:** You can enable Pages on the repo and access the app from any device. Note that data is still stored separately in each browser.
 
-## מבנה הפרויקט
+## Project Structure
 
 ```
 learning-app/
-├── learning-app.html   # כל האפליקציה: HTML + CSS + JS + מאגרי השאלות
+├── learning-app.html   # the whole app: HTML + CSS + JS + question banks
 └── README.md
 ```
 
-## כיוונים להמשך
+## Future Directions
 
-- מסך התחברות, ושילוב האפליקציה כ-tab בתוך אפליקציה ראשית
-- תפקידים נוספים (Frontend, DevOps ועוד)
-- סנכרון בין מכשירים (למשל קובץ JSON ב-Drive או שרת קטן)
-- בדיקת תשובות חכמה יותר בעזרת מודל שפה
+- A login screen, and embedding the app as a tab inside a main app
+- More roles (Frontend, DevOps and more)
+- Sync between devices (e.g. a JSON file on Drive or a small server)
+- Smarter answer checking using a language model
