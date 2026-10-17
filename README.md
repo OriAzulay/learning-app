@@ -5,6 +5,13 @@ A lightweight, single-file HTML app for daily practice toward a developer role. 
 There are currently two tracks: **Backend** and **Basic C++**.
 
 **Live demo:** https://oriazulay.github.io/learning-app/learning-app.html
+**Download:** [learning-app.html](https://raw.githubusercontent.com/OriAzulay/learning-app/main/learning-app.html) (open the link and save the page as an `.html` file)
+
+### Easy version
+
+- **On a phone:** open the Live demo link and choose "Add to Home Screen" to use it like an app.
+- **Offline:** the downloaded file runs on its own in any browser, with no server and no install.
+- **Your progress:** each device and browser keeps its own progress locally. Use "ייצוא גיבוי" (Export backup) and "ייבוא גיבוי" (Import backup) to save it or move it to another device.
 
 ---
 
