@@ -164,7 +164,12 @@ button{font-family:inherit}
   padding:12px 14px;font-size:15px;line-height:1.65;color:#E9FFE4;white-space:pre-wrap;
 }
 .sol .sol-h{display:block;font-size:12px;font-weight:700;color:var(--green);margin-bottom:4px}
-.sol{white-space:normal}
+.sol{white-space:normal;transition:border-color .15s,box-shadow .15s}
+.edit-ans{min-height:92px;white-space:pre-wrap;word-break:break-word;cursor:text}
+.edit-ans .e{font-style:italic;color:#7FC4FF}
+.edit-ans:empty::before{content:attr(data-ph);color:var(--dim)}
+.edit-hint{font-size:11.5px;color:var(--dim);margin-top:4px}
+.edit-hint .e{font-style:italic;color:#7FC4FF}
 .prose{display:block;white-space:pre-wrap}
 .code{
   direction:ltr;text-align:left;margin:8px 0;padding:12px 14px;border-radius:10px;overflow-x:auto;
@@ -711,7 +716,15 @@ function rich(s){
 }
 // קטעים באנגלית/קוד בתוך משפט בעברית מוצגים משמאל לימין (כדי ש-"i <= 5" לא יתהפך)
 function ltrRuns(s){
-  return esc(s.replace(/[A-Za-z_][A-Za-z0-9_:<>=+\-*&!.,()\[\]{}"'\/ ;%|?^~]*[A-Za-z0-9_)\]}>;"'*&]|[A-Za-z]/g, m => `\u0001${m}\u0002`))
+  return esc(s.replace(/[A-Za-z_][A-Za-z0-9_:<>=+\-*&!.,()\[\]{}"'\/ ;%|?^~]*[A-Za-z0-9_)\]}>;"'*&]|[A-Za-z]/g, m => {
+    // סוגר שלא נפתח בתוך הקטע (למשל "(Array)") שייך למשפט העברי ונשאר מחוץ לבידוד
+    let tail = "";
+    const cnt = (s, c) => s.split(c).length - 1;
+    while (/[)\]}]$/.test(m) && cnt(m, {")":"(", "]":"[", "}":"{"}[m.slice(-1)]) < cnt(m, m.slice(-1))){
+      tail = m.slice(-1) + tail; m = m.slice(0, -1);
+    }
+    return `\u0001${m}\u0002${tail}`;
+  }))
     .replace(/\u0001/g, '<bdi dir="ltr">').replace(/\u0002/g, "</bdi>");
 }
 
@@ -979,6 +992,68 @@ function showQuiz(){
   renderQuizState();
 }
 
+/* ---------- עריכת תשובה אחרי הגשה ----------
+   הטקסט נשמר ב-answers[i], ולצידו ansEdit[i]: מחרוזת דגלים (0 = מקורי, 1 = נערך) לכל תו */
+function editorText(node){
+  let s = "";
+  node.childNodes.forEach(c => {
+    if (c.nodeType === 3) s += c.data;
+    else if (c.nodeName === "BR") s += "\n";
+    else if (c.nodeName === "DIV" || c.nodeName === "P") s += (s && !s.endsWith("\n") ? "\n" : "") + editorText(c);
+    else s += editorText(c);
+  });
+  return s;
+}
+function caretOffset(root){
+  const sel = window.getSelection();
+  if (!sel.rangeCount || !root.contains(sel.anchorNode)) return null;
+  const r = document.createRange();
+  r.selectNodeContents(root);
+  r.setEnd(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset);
+  return editorText(r.cloneContents()).length;
+}
+function setCaret(root, off){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n, left = off;
+  while ((n = walker.nextNode())){
+    if (left <= n.data.length){
+      const r = document.createRange(); r.setStart(n, left); r.collapse(true);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      return;
+    }
+    left -= n.data.length;
+  }
+}
+function paintAnswer(el, sess, i){
+  const text = sess.answers[i] || "";
+  const flags = (sess.ansEdit && sess.ansEdit[i]) || "0".repeat(text.length);
+  let html = "", k = 0;
+  while (k < text.length){
+    let j = k; while (j < text.length && flags[j] === flags[k]) j++;
+    const part = esc(text.slice(k, j));
+    html += flags[k] === "1" ? `<span class="e">${part}</span>` : part;
+    k = j;
+  }
+  el.innerHTML = html + (text.endsWith("\n") ? "<br>" : "");
+}
+function syncAnswer(el, sess, i){
+  const oldT = sess.answers[i] || "";
+  const oldF = (sess.ansEdit && sess.ansEdit[i]) || "0".repeat(oldT.length);
+  const newT = editorText(el).replace(/\n$/, m => oldT.endsWith("\n") ? m : "");
+  const off = caretOffset(el);
+  // הסמן מסמן איפה נגמרה ההקלדה, כך שהטקסט החדש מסומן במקום הנכון
+  const pMax = off != null ? Math.max(0, off - Math.max(0, newT.length - oldT.length)) : Infinity;
+  const qMax = off != null ? newT.length - off : Infinity;
+  let p = 0; while (p < pMax && p < oldT.length && p < newT.length && oldT[p] === newT[p]) p++;
+  let q = 0; while (q < qMax && q < oldT.length - p && q < newT.length - p && oldT[oldT.length-1-q] === newT[newT.length-1-q]) q++;
+  const newF = oldF.slice(0, p) + "1".repeat(newT.length - p - q) + oldF.slice(oldT.length - q);
+  sess.answers[i] = newT;
+  (sess.ansEdit ||= {})[i] = newF;
+  save();
+  paintAnswer(el, sess, i);
+  if (off != null) setCaret(el, off);
+}
+
 function renderQ(i){
   const sess = roleDays()[currentDay];
   const li = document.querySelector(`.q[data-i="${i}"]`);
@@ -989,18 +1064,31 @@ function renderQ(i){
 
   if (view === "sol"){
     box.innerHTML = `<div class="sol"><span class="sol-h">הפתרון</span>${rich(it.a)}</div>`;
+  } else if (done){
+    // אחרי ההגשה אפשר לערוך את התשובה; כל מה שנוסף או שונה מוצג בנטוי
+    const ed = document.createElement("div");
+    ed.className = "ans edit-ans " + (sess.results[i] ? "ok" : "bad");
+    ed.contentEditable = "plaintext-only";
+    if (ed.contentEditable !== "plaintext-only") ed.contentEditable = "true";
+    ed.spellcheck = false;
+    ed.dataset.ph = "(לא נכתבה תשובה — אפשר להוסיף כאן)";
+    paintAnswer(ed, sess, i);
+    ed.addEventListener("input", e => { if (!e.isComposing) syncAnswer(ed, sess, i); });
+    ed.addEventListener("compositionend", () => syncAnswer(ed, sess, i));
+    ed.addEventListener("paste", e => {
+      e.preventDefault();
+      document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain"));
+    });
+    ed.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && /^[biu]$/i.test(e.key)) e.preventDefault(); });
+    box.innerHTML = "";
+    box.appendChild(ed);
+    box.insertAdjacentHTML("beforeend", `<div class="edit-hint">✎ אפשר לערוך את התשובה · שינויים מופיעים <span class="e">בכתב נטוי</span></div>`);
   } else {
     const ta = document.createElement("textarea");
     ta.className = "ans";
     ta.placeholder = "כתוב כאן את התשובה שלך...";
     ta.value = sess.answers[i];
-    if (done){
-      ta.readOnly = true;
-      ta.classList.add(sess.results[i] ? "ok" : "bad");
-      if (!ta.value) ta.placeholder = "(לא נכתבה תשובה)";
-    } else {
-      ta.addEventListener("input", () => { sess.answers[i] = ta.value; save(); renderQuizState(); });
-    }
+    ta.addEventListener("input", () => { sess.answers[i] = ta.value; save(); renderQuizState(); });
     box.innerHTML = ""; box.appendChild(ta);
   }
 

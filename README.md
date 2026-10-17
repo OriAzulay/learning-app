@@ -13,6 +13,7 @@ There are currently two tracks: **Backend** and **Basic C++**.
 - **Progress by topic:** Each topic gets a color based on the percentage of correct answers:
   green (75% and above) · orange (50%–75%) · red (below 50%).
 - **Adaptive learning:** Selection favors questions you haven't seen yet and weak topics. A question you got wrong comes back after 3 days.
+- **Editing after submit:** Answers stay editable after Submit, and anything you add or change is shown in italic.
 - **More questions:** The `add more questions` button adds another 20 new questions on the same day, again from level 1 to 5.
 
 ## Screens
@@ -77,6 +78,7 @@ Clicking a previous day in the strip opens that day's questions and answers. A g
         results: [ true, false, ... ],   // correct / incorrect
         done:    [ true, ..., false ],   // which questions have been submitted
         view:    [ "ans" | "sol", ... ], // what each box shows
+        ansEdit: { 3: "0001110" },       // after submit: which characters of an answer were edited (1 = shown in italic)
         submitted: true                  // all of the day's questions were submitted
       }
     },
